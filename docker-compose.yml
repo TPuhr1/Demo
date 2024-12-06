@@ -1,0 +1,55 @@
+version: '3.1'
+
+services:
+  db:
+    stdin_open: true
+    tty: true
+    build: ./db/
+    restart: always
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: user
+      MONGO_INITDB_ROOT_PASSWORD: password
+      MONGO_INITDB_DATABASE:  newDB
+    ports:
+      - 27017:27017
+    networks:
+      - my-network
+    volumes:
+      - ./db/init:/docker-entrypoint-initdb.d 
+
+  server:
+    stdin_open: true
+    tty: true
+    build: ./server/
+    volumes:
+      - ./server/:/usr/src/app/server
+      - /usr/src/app/server/node_modules
+    links:
+      - db
+    ports:
+      - 12000:12000
+    networks:
+      - my-network
+    environment:
+      - MONGO_URI=mongodb://user:password@db:27017/newDB
+
+  ui:
+    stdin_open: true
+    tty: true
+    build: ./ui/
+    volumes:
+      - ./ui/:/usr/src/app
+      - /usr/src/app/node_modules
+      - /usr/src/app/node_modules/.cache
+    ports:
+      - 8080:5173
+    networks:
+      - my-network
+    depends_on:
+      - server
+    environment:
+      - VITE_BACKEND_URL=http://server:12000
+
+networks:
+  my-network:
+    driver: bridge
