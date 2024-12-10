@@ -4,9 +4,22 @@
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/vite.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Vite + Vue + TS</title>
+    <title>Puhr Sports</title>
   </head>
   <body>
+    <div class="container min-h-screen px-28 py-5 max-w-full">
+      <nav class="flex items-center">
+        <img src="./src/assets/images/puhr-sports-high-resolution-logo-transparent-small.png" alt="logo" class="w-40 cursor-pointer">
+        <ul class="flex-1 text-center">
+          <li class="list-none inline-block px-5"><a href="#" class="no-underline px-2 fetch-discs">All</a></li>
+          <li class="list-none inline-block px-5"><a href="#" class="no-underline px-2 fetch-discs" data-type="Driver">Drivers</a></li>
+          <li class="list-none inline-block px-5"><a href="#" class="no-underline px-2 fetch-discs" data-type="Fairway">Fairways</a></li>
+          <li class="list-none inline-block px-5"><a href="#" class="no-underline px-2 fetch-discs" data-type="Midrange">Midranges</a></li>
+          <li class="list-none inline-block px-5"><a href="#" class="no-underline px-2 fetch-discs" data-type="Putter">Putters</a></li>
+        </ul>
+        <li><a href="#">Cart</a></li>
+      </nav>
+      
     <div id="app"></div>
     <script type="module" src="/src/main.ts"></script>
   </body>

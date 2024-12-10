@@ -1,14 +1,3 @@
-# FROM node:18.13.0
-
-# # Installing server modules
-# WORKDIR /usr/src/app/server
-# # COPY package.json ./
-# # RUN npm install
-
-# # Command to start the server
-# # USER root
-# # CMD ["go", "run", "main.go"]
-
 # Use an official Go runtime as a base image
 FROM golang:1.20-alpine
 

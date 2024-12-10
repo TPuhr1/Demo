@@ -6,8 +6,8 @@ import (
 	"fmt"
 	"log"
 	"net/http"
-	"strconv"
-	"sync"
+	// "strconv"
+	// "sync"
 	"time"
 
 	"github.com/gorilla/mux"
@@ -24,33 +24,14 @@ type User struct {
 	Id int `json:"id"`
 }
 
-var userCache = make(map[int]User)
-var cacheMutex sync.RWMutex
-
 // Creating my Disc structure
 type Disc struct {
 	ID    int    `json:"_id"`
 	Name  string `json:"name"`
 	Img   string `json:"img"`
 	Price string `json:"price"`
+	Type string `json:"type"`
 }
-
-// Create a slice of Disc structs
- var discCache = []Disc{
- 	{ID: 1, Name: "Crave", Img: "https://images-na.ssl-images-amazon.com/images/I/612lLSPhT1L.jpg", Price: "$20"},
- 	{ID: 2, Name: "Destroyer", Img: "https://m.media-amazon.com/images/I/813mU5I8bFL.jpg", Price: "$20"},
- 	{ID: 3, Name: "Virus", Img: "https://images-na.ssl-images-amazon.com/images/I/51vEEQrB6yL.jpg", Price: "$20"},
- 	{ID: 4, Name: "Leopard3", Img: "https://m.media-amazon.com/images/I/81VBeQuv9wL.jpg", Price: "$18"},
- 	{ID: 5, Name: "Resistor", Img: "https://m.media-amazon.com/images/I/51ygHUFkaqL.jpg", Price: "$18"},
- 	{ID: 6, Name: "Hatchet", Img: "https://us.ftbpic.com/product-amz/westside-discs-origio-burst-hatchet-fairway-disc-golf-driver-great/51eJmz-1MTL._AC_SR480,480_.jpg", Price: "$18"},
- 	{ID: 7, Name: "Maestro", Img: "https://www.discgolfmarket.com/cdn/shop/products/DM_ActivePremium_Maestro_1024x1024_bac409dd-62f1-42ce-85f0-56cb75b11cf2_512x512.jpg?v=1597850564", Price: "$18"},
- 	{ID: 8, Name: "MX3", Img: "https://www.pbsports.com/cdn/shop/files/MX3-400Glow-1_400x_e4e0cf1d-e4f7-4068-b360-b8056ed75366.jpg?v=1724871751&width=533", Price: "$18"},
- 	{ID: 9, Name: "Roc3", Img: "https://discgolffanatic.com/wp-content/uploads/2020/04/Innova-Champion-plastic-roc3-midrange.webp", Price: "$18"},
- 	{ID: 10, Name: "P2", Img: "https://i0.wp.com/discgolffanatic.com/wp-content/uploads/2021/12/Discmania-P2-putter.jpg?resize=640,640&ssl=1", Price: "$18"},
- 	{ID: 11, Name: "Roach", Img: "https://i0.wp.com/discgolffanatic.com/wp-content/uploads/2021/11/Discraft-Roach-Putter.webp?resize=640,640&ssl=1", Price: "$18"},
- 	{ID: 12, Name: "Sensei", Img: "https://m.media-amazon.com/images/I/61B6634eizL.jpg", Price: "$18"},
- }
-
 
 func main() {
 	// Connect to MongoDB
@@ -62,43 +43,55 @@ func main() {
 
 	mux.HandleFunc("/", handleRoot).Methods("GET")
 
-	mux.HandleFunc("/users", createUser).Methods("POST")
-	mux.HandleFunc("/users/{id}", getUser).Methods("GET")
-	mux.HandleFunc("/users/{id}", updateUser).Methods("PUT")
-	mux.HandleFunc("/users", getAllUsers).Methods("GET")
-	mux.HandleFunc("/discs", getAllDiscs).Methods("GET")
-	mux.HandleFunc("/users/{id}", deleteUser).Methods("DELETE")
+	mux.HandleFunc("/discs", getDiscs).Methods("GET")
+	mux.HandleFunc("/discType", getType).Methods("GET")
 	fmt.Println("Server listening to :12000")
 	http.ListenAndServe(":12000", mux)
 }
 
-// Connect to MongoDB
-func connectToMongo() {
-	var err error
-	// MongoDB URI (change it as per your setup)
-	uri := "mongodb://localhost:27017" // or use your MongoDB URI
+ // Connect to MongoDB
+ func connectToMongo() {
+ 	var err error
+ 	// MongoDB URI (change it as per your setup)
+ 	uri := "mongodb+srv://admin:0qww294e@cluster0.5gxx4.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0" // or use your MongoDB URI
 
-	client, err = mongo.NewClient(options.Client().ApplyURI(uri))
-	if err != nil {
-		log.Fatal(err)
-	}
+ 	client, err = mongo.NewClient(options.Client().ApplyURI(uri))
+ 	if err != nil {
+ 		log.Fatal(err)
+ 	}
 
-	// Establish connection with a timeout context
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
+ 	// Establish connection with a timeout context
+ 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+ 	defer cancel()
 
-	err = client.Connect(ctx)
-	if err != nil {
-		log.Fatal(err)
-	}
+ 	err = client.Connect(ctx)
+ 	if err != nil {
+ 		log.Fatal(err)
+ 	}
 
-	fmt.Println("Connected to MongoDB!")
-}
+ 	fmt.Println("Connected to MongoDB!")
+ }
 
-// Get the discs collection from the MongoDB database
 func getCollection() *mongo.Collection {
-	return client.Database("local").Collection("discs")
+    // Create a client option and use the new Mongo Connect method
+    clientOptions := options.Client().ApplyURI("mongodb+srv://admin:0qww294e@cluster0.5gxx4.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0")
+
+    // Connect to MongoDB using the new Connect method
+    client, err := mongo.Connect(context.Background(), clientOptions)
+    if err != nil {
+        log.Fatal("Failed to connect to MongoDB:", err)
+    }
+
+    // Check the connection to MongoDB
+    err = client.Ping(context.Background(), nil)
+    if err != nil {
+        log.Fatal("Failed to ping MongoDB:", err)
+    }
+
+    // Access and return the collection
+    return client.Database("newDB").Collection("discs")
 }
+
 
 func handleCORS(w http.ResponseWriter, r *http.Request) {
 	// Allow all origins (*), you can replace this with a specific origin if needed
@@ -123,184 +116,93 @@ func handleRoot(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprintf(w, "Hello, this is a CORS-enabled response!")
 }
 
-func deleteUser(w http.ResponseWriter, r *http.Request) {
-	id, err := strconv.Atoi(mux.Vars(r)["id"])
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
-	}
-
-	if _, ok := userCache[id]; !ok {
-		http.Error(w, "user not found", http.StatusBadRequest)
-		return
-	}
-
-	cacheMutex.Lock()
-	delete(userCache, id)
-	cacheMutex.Unlock()
-
-	w.WriteHeader(http.StatusNoContent)
-}
-
-func getUser(w http.ResponseWriter, r *http.Request) {
-	id, err := strconv.Atoi(mux.Vars(r)["id"])
-	//id, err := strconv.Atoi(r.PathValue("id"))
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
-	}
-
-	cacheMutex.RLock()
-	user, ok := userCache[id]
-	cacheMutex.RUnlock()
-	if !ok {
-		http.Error(w, "user not found", http.StatusNotFound)
-		return
-	}
-
-	w.Header().Set("Content-Type", "application/json")
-	j, err := json.Marshal(user)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	fmt.Println(user)
-	fmt.Println(userCache[id])
-
-	w.WriteHeader(http.StatusOK)
-	w.Write(j)
-}
-
-func updateUser(w http.ResponseWriter, r *http.Request) {
-	id, ok := strconv.Atoi(mux.Vars(r)["id"])
-	//id, ok := strconv.Atoi(r.PathValue("id"))
-	if ok != nil {
-		http.Error(w, ok.Error(), http.StatusBadRequest)
-		return
-	}
-	
-	var user User
-	err := json.NewDecoder(r.Body).Decode(&user)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
-	}
-	
-	if user.Name == "" {
-		http.Error(w, "name is required", http.StatusBadRequest)
-		return
-	}
-
-	cacheMutex.Lock()
-	user.Id = id
-	userCache[id] = user
-	cacheMutex.Unlock()
-
-	w.WriteHeader(http.StatusNoContent)
-}
-
-func getAllUsers(w http.ResponseWriter, r *http.Request) {
-	// Get all users from the cache
-	cacheMutex.RLock()
-	var users []User
-	for _, user := range userCache {
-		users = append(users, user)
-	}
-	cacheMutex.RUnlock()
-
-	// Marshal users to JSON
-	w.Header().Set("Content-Type", "application/json")
-	j, err := json.Marshal(users)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	// Send response
-	w.WriteHeader(http.StatusOK)
-	w.Write(j)
-}
-
 // Get all discs
 func getDiscs(w http.ResponseWriter, _ *http.Request) {
 	var discs []Disc
-	fmt.Println("00")
 	collection := getCollection()
-	fmt.Println("0")
+
+	// Set up a context with a timeout for the query
+    ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+    defer cancel()
 
 	// Fetch all documents from the users collection
-	cursor, err := collection.Find(context.TODO(), bson.D{})
-	fmt.Println("0.5")
+	cursor, err := collection.Find(ctx, bson.D{})
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	// defer cursor.Close(context.Background())
+	 defer cursor.Close(ctx)
 
-	fmt.Println("1")
 	// Decode the results into the users slice
-	for cursor.Next(context.Background()) {
-		fmt.Println("2")
+	for cursor.Next(ctx) {
 		var disc Disc
 		if err := cursor.Decode(&disc); err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
 		discs = append(discs, disc)
-		fmt.Println("3")
 	}
 
-	// Respond with the users list
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(discs)
+	// Check if any errors occurred during cursor iteration
+    if err := cursor.Err(); err != nil {
+        http.Error(w, err.Error(), http.StatusInternalServerError)
+        return
+    }
+
+    // Return the data as JSON
+    w.Header().Set("Content-Type", "application/json")
+    if err := json.NewEncoder(w).Encode(discs); err != nil {
+        http.Error(w, err.Error(), http.StatusInternalServerError)
+    }
 }
 
- func getAllDiscs(w http.ResponseWriter, r *http.Request) {
- 	// Get all users from the cache
- 	cacheMutex.RLock()
- 	var Discs []Disc
- 	// appends all discCache into Discs
- 	Discs = append(Discs, discCache...)
-	
- 	cacheMutex.RUnlock()
+// Get all discs, optionally filtered by query parameters
+func getType(w http.ResponseWriter, r *http.Request) {
+    var discs []Disc
+    collection := getCollection()
 
- 	// Marshal users to JSON
- 	w.Header().Set("Content-Type", "application/json")
- 	j, err := json.Marshal(Discs)
- 	if err != nil {
- 		http.Error(w, err.Error(), http.StatusInternalServerError)
- 		return
- 	}
+    // Extract filter parameters from the query string (e.g., ?genre=Rock)
+    Type := r.URL.Query().Get("type")
+	fmt.Println(Type)
 
- 	// Send response
- 	w.WriteHeader(http.StatusOK)
- 	w.Write(j)
- }
+    // Create a MongoDB filter
+    filter := bson.D{}
 
-func createUser(w http.ResponseWriter, r *http.Request) {
-	
-	var user User
-	err := json.NewDecoder(r.Body).Decode(&user)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
-	}
-	
-	if user.Name == "" {
-		http.Error(w, "name is required", http.StatusBadRequest)
-		return
-	}
+    // Add filters based on query parameters (only if they are provided)
+    if Type != "" {
+        filter = append(filter, bson.E{Key: "type", Value: Type})
+    }
+    
 
+    // Set up a context with a timeout for the query
+    ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+    defer cancel()
 
+    // Fetch documents from the collection based on the constructed filter
+    cursor, err := collection.Find(ctx, filter)
+    if err != nil {
+        http.Error(w, err.Error(), http.StatusInternalServerError)
+        return
+    }
+    defer cursor.Close(ctx)
 
-	cacheMutex.Lock()
-	user.Id = len(userCache)+1
-	userCache[len(userCache)+1] = user
-	cacheMutex.Unlock()
+    // Decode the results into the discs slice
+    for cursor.Next(ctx) {
+        var disc Disc
+        if err := cursor.Decode(&disc); err != nil {
+            http.Error(w, err.Error(), http.StatusInternalServerError)
+            return
+        }
+        discs = append(discs, disc)
+    }
 
-	fmt.Println(user)
-	fmt.Println(userCache[len(userCache)])
+    // Handle errors from cursor iteration
+    if err := cursor.Err(); err != nil {
+        http.Error(w, err.Error(), http.StatusInternalServerError)
+        return
+    }
 
-	w.WriteHeader(http.StatusNoContent)
+    // Return the filtered list of discs as JSON
+    w.Header().Set("Content-Type", "application/json")
+    json.NewEncoder(w).Encode(discs)
 }
