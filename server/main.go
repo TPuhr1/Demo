@@ -163,7 +163,6 @@ func getType(w http.ResponseWriter, r *http.Request) {
 
     // Extract filter parameters from the query string (e.g., ?genre=Rock)
     Type := r.URL.Query().Get("type")
-	fmt.Println(Type)
 
     // Create a MongoDB filter
     filter := bson.D{}
